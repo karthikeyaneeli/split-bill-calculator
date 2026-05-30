@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Split Bill Calculator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 0.3rem;
+      color: #ffffff;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+    }
+
+    .card label {
+      font-size: 12px;
+      color: #888;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .card span {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .section-title {
+      font-size: 13px;
+      color: #888;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    input, select {
+      width: 100%;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      color: #f0f0f0;
+      padding: 8px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: #555;
+    }
+
+    button {
+      background: #ffffff;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button:hover { background: #ddd; }
+
+    .btn-full {
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .item .remove {
+      background: none;
+      border: none;
+      color: #e05;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+
+    .item-left { display: flex; flex-direction: column; gap: 2px; }
+    .item-name { font-weight: 500; color: #fff; }
+    .item-sub { font-size: 12px; color: #888; }
+
+    .settlement {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .settlement .arrow { color: #888; }
+    .settlement .amount { margin-left: auto; color: #ff6b6b; font-weight: 600; }
+
+    .settled {
+      color: #4caf50;
+      font-size: 14px;
+      padding: 8px 0;
+    }
+
+    #settlement-section { display: none; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #2a2a2a;
+      margin: 0.5rem 0;
+    }
+
+    @media (max-width: 500px) {
+      .grid { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Split Bill Calculator</h1>
+  <p class="subtitle">Add people and expenses — see who pays whom</p>
+
+  <div class="container">
+
+    <div class="summary">
+      <div class="card">
+        <label>Total expenses</label>
+        <span id="total-display">₹0</span>
+      </div>
+      <div class="card">
+        <label>Per person</label>
+        <span id="per-person-display">₹0</span>
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <div>
+        <p class="section-title">People</p>
+        <div class="row">
+          <input type="text" id="person-input" placeholder="Enter name" />
+          <button onclick="addPerson()">Add</button>
+        </div>
+        <div id="people-list"></div>
+      </div>
+
+      <div>
+        <p class="section-title">Expenses</p>
+        <input type="text" id="expense-desc" placeholder="Description (e.g. food)" style="margin-bottom:6px;" />
+        <div class="row">
+          <input type="number" id="expense-amount" placeholder="₹ Amount" min="0" />
+          <select id="expense-payer"><option value="">Paid by</option></select>
+        </div>
+        <button class="btn-full" onclick="addExpense()">Add expense</button>
+        <hr class="divider" style="margin-top:10px;" />
+        <div id="expense-list" style="margin-top:8px;"></div>
+      </div>
+
+    </div>
+
+    <div id="settlement-section">
+      <p class="section-title">Who pays whom</p>
+      <div id="settlement-list"></div>
+    </div>
+
+  </div>
+
+  <script>
+    let people = [];
+    let expenses = [];
+
+    function addPerson() {
+      const input = document.getElementById('person-input');
+      const name = input.value.trim();
+      if (!name || people.includes(name)) return;
+      people.push(name);
+      input.value = '';
+      renderPeople();
+      updatePayerSelect();
+      calculate();
+    }
+
+    function removePerson(name) {
+      people = people.filter(p => p !== name);
+      expenses = expenses.filter(e => e.payer !== name);
+      renderPeople();
+      renderExpenses();
+      updatePayerSelect();
+      calculate();
+    }
+
+    function addExpense() {
+      const desc = document.getElementById('expense-desc').value.trim();
+      const amount = parseFloat(document.getElementById('expense-amount').value);
+      const payer = document.getElementById('expense-payer').value;
+      if (!desc || isNaN(amount) || amount <= 0 || !payer) return;
+      expenses.push({ desc, amount, payer, id: Date.now() });
+      document.getElementById('expense-desc').value = '';
+      document.getElementById('expense-amount').value = '';
+      renderExpenses();
+      calculate();
+    }
+
+    function removeExpense(id) {
+      expenses = expenses.filter(e => e.id !== id);
+      renderExpenses();
+      calculate();
+    }
+
+    function renderPeople() {
+      const list = document.getElementById('people-list');
+      list.innerHTML = people.map(p => `
+        <div class="item">
+          <span class="item-name">${p}</span>
+          <button class="remove" onclick="removePerson('${p}')">×</button>
+        </div>
+      `).join('');
+    }
+
+    function renderExpenses() {
+      const list = document.getElementById('expense-list');
+      list.innerHTML = expenses.map(e => `
+        <div class="item">
+          <div class="item-left">
+            <span class="item-name">${e.desc}</span>
+            <span class="item-sub">paid by ${e.payer}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-weight:600;">₹${e.amount.toFixed(0)}</span>
+            <button class="remove" onclick="removeExpense(${e.id})">×</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updatePayerSelect() {
+      const sel = document.getElementById('expense-payer');
+      sel.innerHTML = '<option value="">Paid by</option>' +
+        people.map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+
+    function calculate() {
+      const total = expenses.reduce((s, e) => s + e.amount, 0);
+      const n = people.length;
+      document.getElementById('total-display').textContent = '₹' + total.toFixed(0);
+      document.getElementById('per-person-display').textContent = n > 0 ? '₹' + (total / n).toFixed(0) : '₹0';
+
+      const section = document.getElementById('settlement-section');
+      if (n < 2 || total === 0) { section.style.display = 'none'; return; }
+
+      const share = total / n;
+      const balance = {};
+      people.forEach(p => balance[p] = 0);
+      expenses.forEach(e => { balance[e.payer] += e.amount; });
+      people.forEach(p => { balance[p] -= share; });
+
+      const debtors = people.filter(p => balance[p] < -0.01).map(p => ({ name: p, amt: -balance[p] }));
+      const creditors = people.filter(p => balance[p] > 0.01).map(p => ({ name: p, amt: balance[p] }));
+
+      const transactions = [];
+      let i = 0, j = 0;
+      while (i < debtors.length && j < creditors.length) {
+        const pay = Math.min(debtors[i].amt, creditors[j].amt);
+        transactions.push({ from: debtors[i].name, to: creditors[j].name, amt: pay });
+        debtors[i].amt -= pay;
+        creditors[j].amt -= pay;
+        if (debtors[i].amt < 0.01) i++;
+        if (creditors[j].amt < 0.01) j++;
+      }
+
+      const settlList = document.getElementById('settlement-list');
+      if (transactions.length === 0) {
+        settlList.innerHTML = '<p class="settled">✓ Everyone is settled up!</p>';
+      } else {
+        settlList.innerHTML = transactions.map(t => `
+          <div class="settlement">
+            <span style="font-weight:500;">${t.from}</span>
+            <span class="arrow">→</span>
+            <span style="font-weight:500;">${t.to}</span>
+            <span class="amount">₹${t.amt.toFixed(0)}</span>
+          </div>
+        `).join('');
+      }
+      section.style.display = 'block';
+    }
+
+    document.getElementById('person-input').addEventListener('keydown', e => { if (e.key === 'Enter') addPerson(); });
+    document.getElementById('expense-amount').addEventListener('keydown', e => { if (e.key === 'Enter') addExpense(); });
+  </script>
+
+</body>
+</html>
